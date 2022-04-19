@@ -1,0 +1,45 @@
+version: "3"
+
+services:
+  mysql:
+    platform: linux/arm/v7
+    image: mysql:5.7
+    container_name: my_database
+    environment:
+      - MYSQL_DATABASE=my_database
+      - MYSQL_ROOT_PASSWORD=password
+      - TZ=Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    networks:
+      payhere-net:
+        ipv4_address: 172.18.0.100
+  redis:
+    image: redis:latest
+    container_name: my_jwt_db
+    ports:
+      - "6379:6379"
+    networks:
+      payhere-net:
+        ipv4_address: 172.18.0.101
+  gin:
+    build: .
+    container_name: gin_application
+    environment:
+      GIN_MODE: release
+    env_file:
+      - ".env.docker"
+    ports:
+      - "80:8080"
+    networks:
+      payhere-net:
+        ipv4_address: 172.18.0.102
+
+networks:
+  payhere-net:
+    driver: bridge
+    external:
+      name: payhere
