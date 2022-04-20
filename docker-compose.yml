@@ -2,7 +2,7 @@ version: "3"
 
 services:
   mysql:
-    platform: linux/arm/v7
+    platform: linux/amd64
     image: mysql:5.7
     container_name: my_database
     environment:
@@ -17,6 +17,9 @@ services:
     networks:
       payhere-net:
         ipv4_address: 172.18.0.100
+    restart: always
+    volumes:
+      - ./ddl:/docker-entrypoint-initdb.d
   redis:
     image: redis:latest
     container_name: my_jwt_db

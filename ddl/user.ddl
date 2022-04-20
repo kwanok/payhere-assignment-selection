@@ -1,4 +1,5 @@
 -- auto-generated definition
+use my_database;
 create table users
 (
     id         char(36)

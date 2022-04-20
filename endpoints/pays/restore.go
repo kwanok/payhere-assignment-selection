@@ -16,5 +16,5 @@ func RestorePay(c *gin.Context) {
 
 	payRepository.RestorePay(id, user)
 
-	c.JSON(http.StatusOK, "")
+	c.JSON(http.StatusOK, "restored")
 }

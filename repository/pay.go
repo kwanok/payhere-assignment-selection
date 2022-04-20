@@ -8,9 +8,9 @@ import (
 
 type Pay struct {
 	Id        string `json:"id"`
-	UserId    string `json:"userId"`
+	UserId    string `json:"-"`
 	Memo      string `json:"memo"`
-	Removed   bool   `json:"removed"`
+	Removed   bool   `json:"-"`
 	Price     int    `json:"price"`
 	CreatedAt string `json:"createdAt"`
 	UpdatedAt string `json:"updatedAt"`
@@ -62,7 +62,7 @@ func (repo *PayRepository) AddPay(pay models.Pay, user models.User) {
 
 func (repo *PayRepository) GetPaysByUserId(userId string) []models.Pay {
 	var pays []models.Pay
-	rows, err := repo.Db.Query("SELECT id, user_id, price, memo, created_at, removed FROM pays WHERE user_id = ? AND removed=0", userId)
+	rows, err := repo.Db.Query("SELECT id, user_id, price, memo, created_at, updated_at, removed FROM pays WHERE user_id = ? AND removed=0", userId)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func (repo *PayRepository) GetPaysByUserId(userId string) []models.Pay {
 
 	for rows.Next() {
 		var pay Pay
-		rows.Scan(&pay.Id, &pay.UserId, &pay.Price, &pay.Memo, &pay.CreatedAt, &pay.Removed)
+		rows.Scan(&pay.Id, &pay.UserId, &pay.Price, &pay.Memo, &pay.CreatedAt, &pay.UpdatedAt, &pay.Removed)
 		pays = append(pays, &pay)
 	}
 
@@ -80,7 +80,7 @@ func (repo *PayRepository) GetPaysByUserId(userId string) []models.Pay {
 
 func (repo *PayRepository) GetRemovedPaysByUserId(userId string) []models.Pay {
 	var pays []models.Pay
-	rows, err := repo.Db.Query("SELECT id, user_id, price, memo, created_at, removed FROM pays WHERE user_id = ? AND removed=1", userId)
+	rows, err := repo.Db.Query("SELECT id, user_id, price, memo, created_at, updated_at, removed FROM pays WHERE user_id = ? AND removed=1", userId)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func (repo *PayRepository) GetRemovedPaysByUserId(userId string) []models.Pay {
 
 	for rows.Next() {
 		var pay Pay
-		rows.Scan(&pay.Id, &pay.UserId, &pay.Price, &pay.Memo, &pay.CreatedAt, &pay.Removed)
+		rows.Scan(&pay.Id, &pay.UserId, &pay.Price, &pay.Memo, &pay.CreatedAt, &pay.UpdatedAt, &pay.Removed)
 		pays = append(pays, &pay)
 	}
 
@@ -97,11 +97,11 @@ func (repo *PayRepository) GetRemovedPaysByUserId(userId string) []models.Pay {
 }
 
 func (repo *PayRepository) FindPayById(id string, user models.User) models.Pay {
-	row := repo.Db.QueryRow("SELECT id, user_id, price, memo, removed FROM pays where id = ? AND user_id = ? AND removed=0 LIMIT 1", id, user.GetId())
+	row := repo.Db.QueryRow("SELECT id, user_id, price, memo, created_at, updated_at, removed FROM pays where id = ? AND user_id = ? AND removed=0 LIMIT 1", id, user.GetId())
 
 	var pay Pay
 
-	if err := row.Scan(&pay.Id, &pay.UserId, &pay.Price, &pay.Memo, &pay.Removed); err != nil {
+	if err := row.Scan(&pay.Id, &pay.UserId, &pay.Price, &pay.Memo, &pay.CreatedAt, &pay.UpdatedAt, &pay.Removed); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}

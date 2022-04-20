@@ -26,6 +26,6 @@ func Routes(r *gin.Engine) {
 		payGroup.POST("/", pays.CreatePay)
 		payGroup.PATCH("/:id", pays.UpdatePay)
 		payGroup.DELETE("/:id", pays.DeletePay)
-		payGroup.PATCH("/:id", pays.RestorePay)
+		payGroup.PATCH("/restore/:id", pays.RestorePay)
 	}
 }

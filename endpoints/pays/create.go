@@ -23,13 +23,14 @@ func CreatePay(c *gin.Context) {
 		return
 	}
 
+	id := uuid.New().String()
 	payRepository := repository.PayRepository{Db: repository.DBCon}
 	payRepository.AddPay(&repository.Pay{
-		Id:     uuid.New().String(),
+		Id:     id,
 		UserId: user.GetId(),
 		Price:  json.Price,
 		Memo:   json.Memo,
 	}, user)
 
-	c.JSON(http.StatusCreated, json)
+	c.JSON(http.StatusCreated, id)
 }
