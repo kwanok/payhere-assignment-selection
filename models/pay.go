@@ -10,9 +10,11 @@ type Pay interface {
 }
 
 type PayRepository interface {
-	EditMemo(memo string)
+	FindPayById(id string, user User) Pay
 	GetPaysByUserId(userId string) []Pay
-	GetPayById(id string) Pay
-	RemovePay(id string)
+	GetRemovedPaysByUserId(userId string) []Pay
 	AddPay(pay Pay, user User)
+	EditPay(pay Pay)
+	RemovePay(id string, user User)
+	RestorePay(id string, user User)
 }

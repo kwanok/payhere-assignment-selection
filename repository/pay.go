@@ -7,13 +7,13 @@ import (
 )
 
 type Pay struct {
-	Id        string
-	UserId    string
-	Memo      string
-	Removed   bool
-	Price     int
-	CreatedAt string
-	UpdatedAt string
+	Id        string `json:"id"`
+	UserId    string `json:"userId"`
+	Memo      string `json:"memo"`
+	Removed   bool   `json:"removed"`
+	Price     int    `json:"price"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
 }
 
 type PayRepository struct {
@@ -62,7 +62,7 @@ func (repo *PayRepository) AddPay(pay models.Pay, user models.User) {
 
 func (repo *PayRepository) GetPaysByUserId(userId string) []models.Pay {
 	var pays []models.Pay
-	rows, err := repo.Db.Query("SELECT id, user_id, price, memo, created_at, removed FROM pays where user_id = ?", userId)
+	rows, err := repo.Db.Query("SELECT id, user_id, price, memo, created_at, removed FROM pays WHERE user_id = ? AND removed=0", userId)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -78,16 +78,71 @@ func (repo *PayRepository) GetPaysByUserId(userId string) []models.Pay {
 	return pays
 }
 
-func (repo *PayRepository) EditMemo(memo string) {
+func (repo *PayRepository) GetRemovedPaysByUserId(userId string) []models.Pay {
+	var pays []models.Pay
+	rows, err := repo.Db.Query("SELECT id, user_id, price, memo, created_at, removed FROM pays WHERE user_id = ? AND removed=1", userId)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	defer rows.Close()
+
+	for rows.Next() {
+		var pay Pay
+		rows.Scan(&pay.Id, &pay.UserId, &pay.Price, &pay.Memo, &pay.CreatedAt, &pay.Removed)
+		pays = append(pays, &pay)
+	}
+
+	return pays
 }
 
-func (repo *PayRepository) GetPayById(id string) models.Pay {
+func (repo *PayRepository) FindPayById(id string, user models.User) models.Pay {
+	row := repo.Db.QueryRow("SELECT id, user_id, price, memo, removed FROM pays where id = ? AND user_id = ? AND removed=0 LIMIT 1", id, user.GetId())
+
 	var pay Pay
+
+	if err := row.Scan(&pay.Id, &pay.UserId, &pay.Price, &pay.Memo, &pay.Removed); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		log.Fatal(err)
+	}
 
 	return &pay
 }
 
-func (repo *PayRepository) RemovePay(id string) {
+func (repo *PayRepository) EditPay(pay models.Pay) {
+	stmt, err := repo.Db.Prepare("UPDATE pays SET price=?,memo=? WHERE id=? AND removed=0")
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	_, err = stmt.Exec(pay.GetPrice(), pay.GetMemo(), pay.GetId())
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (repo *PayRepository) RemovePay(id string, user models.User) {
+	stmt, err := repo.Db.Prepare("UPDATE pays SET removed=1 WHERE id=? AND user_id=? AND removed=0")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = stmt.Exec(id, user.GetId())
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (repo *PayRepository) RestorePay(id string, user models.User) {
+	stmt, err := repo.Db.Prepare("UPDATE pays SET removed=0 WHERE id=? AND user_id=? AND removed=1")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = stmt.Exec(id, user.GetId())
+	if err != nil {
+		log.Fatal(err)
+	}
 }

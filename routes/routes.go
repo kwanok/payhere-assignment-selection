@@ -1,10 +1,10 @@
 package routes
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/payhere-assignment-selection/endpoints/auth"
-	"github.com/payhere-assignment-selection/repository"
+	"github.com/payhere-assignment-selection/endpoints/pays"
+	"github.com/payhere-assignment-selection/middlewares"
 )
 
 func Routes(r *gin.Engine) {
@@ -14,15 +14,18 @@ func Routes(r *gin.Engine) {
 		})
 	})
 
-	r.GET("/users", func(c *gin.Context) {
-		fmt.Println("users")
-		repo := repository.UserRepository{Db: repository.DBCon}
-		users := repo.GetAllUsers()
-		c.JSON(200, users)
-	})
-
 	r.POST("/register", auth.Register)
 	r.POST("/login", auth.Login)
-	r.POST("/logout", auth.Logout)
+	r.POST("/logout", middlewares.IsAuthorized, auth.Logout)
 	r.POST("/refresh", auth.Refresh)
+
+	payGroup := r.Group("/pays", middlewares.IsAuthorized)
+	{
+		payGroup.GET("/", pays.GetPays)
+		payGroup.GET("/:id", pays.GetPay)
+		payGroup.POST("/", pays.CreatePay)
+		payGroup.PATCH("/:id", pays.UpdatePay)
+		payGroup.DELETE("/:id", pays.DeletePay)
+		payGroup.PATCH("/:id", pays.RestorePay)
+	}
 }
